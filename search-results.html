@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>תוצאות חיפוש - ספריית מעלה אדומים</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        h1 {
+            color: #333;
+            font-size: 1.8em;
+        }
+
+        .back-btn {
+            padding: 12px 24px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+
+        .results-info {
+            background: #f0f4ff;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            color: #333;
+            font-size: 16px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+            font-size: 18px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .book-card {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+            display: flex;
+            gap: 20px;
+        }
+
+        .book-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .book-image {
+            flex-shrink: 0;
+            width: 120px;
+            height: 180px;
+            overflow: hidden;
+            border-radius: 8px;
+            background: #f5f5f5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .book-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .book-image.no-image {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-size: 48px;
+        }
+
+        .book-details {
+            flex: 1;
+        }
+
+        .book-title {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .book-info {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 8px 15px;
+            margin-bottom: 15px;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #666;
+        }
+
+        .info-value {
+            color: #333;
+        }
+
+        .book-classification {
+            background: #f0f4ff;
+            padding: 8px 12px;
+            border-radius: 6px;
+            display: inline-block;
+            font-size: 14px;
+            color: #667eea;
+            font-weight: 500;
+            margin-bottom: 10px;
+        }
+
+        .availability {
+            padding: 8px 16px;
+            border-radius: 6px;
+            display: inline-block;
+            font-weight: 500;
+            margin-top: 10px;
+        }
+
+        .availability.available {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .availability.unavailable {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .no-results-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 id="page-title">תוצאות חיפוש</h1>
+            <a href="library-search-with-proxy.html" class="back-btn">חזרה לחיפוש</a>
+        </div>
+
+        <div class="results-info" id="results-info" style="display: none;"></div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>מחפש...</p>
+        </div>
+
+        <div id="error-container"></div>
+        <div id="results-container"></div>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const query = urlParams.get('q');
+        const searchType = urlParams.get('type') || 'item';
+        const itemIds = urlParams.get('ids');
+
+        if (query) {
+            document.getElementById('page-title').textContent = `תוצאות חיפוש: "${query}"`;
+        }
+
+        async function performSearch() {
+            const resultsContainer = document.getElementById('results-container');
+            const resultsInfoDiv = document.getElementById('results-info');
+            try {
+                // ... (הגדרות ה-formData נשארות זהות) ...
+                const formData = new URLSearchParams({
+                    'NewNameMade': '30213',
+                    'Referral': 'button',
+                    'FromRec': '',
+                    'SiteName': 'LIB_maale-adummim',
+                    'CNumber': '',
+                    'SearchType': 'Card1',
+                    'BuyerID': '508475146',
+                    'Clubtmp1': '',
+                    'comefrom': window.location.href,
+                    'SearchFildType_1': searchType === 'item' ? 'DataCardName~DataCardField_1' : 'DataCardField_0~DataCardField_2~DataCardField_3~DataCardLongText_37',
+                    'FreeText_1': query,
+                    'ThisCard': 'Card1',
+                    'CatalogSearch_1': '6',
+                    'Bool_1': ' and ',
+                    'SearchFildType_2': 'DataCardName~DataCardField_1',
+                    'FreeText_2': '',
+                    'Bool_2': ' and ',
+                    'SearchFildType_3': 'DataCardName~DataCardField_1',
+                    'FreeText_3': '',
+                    'z1': '10',
+                    'chosenItem': itemIds || '',
+                    'cndLikeOrEq': '',
+                    'OrderByField': '',
+                    'OrderBy': '',
+                    'adv_open': 'none'
+                });
+
+                const response = await fetch('http://localhost:3000/BuildaGate5library/general2/company_search_tree.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error(`שגיאת שרת: ${response.status}`);
+                }
+
+                const html = await response.text();
+                // **התיקון הקריטי:** קליטת התוצאות
+                const bookCards = parseResults(html);
+
+                displayResults(bookCards);
+
+            } catch (error) {
+                console.error('Search error:', error);
+                showError('שגיאה בביצוע החיפוש: ' + error.message);
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+
+
+        /**
+         * מנתחת את תוצאות החיפוש מה-HTML של הספרייה ומחזירה מערך כרטיסי ספרים מעוצבים.
+         * הפונקציה מתגברת על מבנה ה-HTML הבעייתי ע"י זיהוי שורות <tr> המכילות תוכן מלא (לפחות 5 TDs).
+         * @param {string} htmlContent - תוכן ה-HTML של הדף.
+         * @returns {Array<HTMLElement>} - מערך של כרטיסי ספרים מעוצבים.
+         */
+        /**
+         * מנתחת את תוצאות החיפוש מה-HTML של הספרייה ומחזירה מערך כרטיסי ספרים מעוצבים.
+         * @param {string} htmlContent - תוכן ה-HTML של הדף.
+         * @returns {Array<HTMLElement>} - מערך של כרטיסי ספרים מעוצבים.
+         */
+        function parseResults(htmlContent) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(htmlContent, 'text/html');
+
+            // **התיקון הקריטי:** הגבלת החיפוש לאזור התוצאות בלבד.
+            // נחפש את ה-TABLE הראשי של התוצאות
+            const mainResultsTable = doc.getElementById('stm5toptbl1');
+
+            // אם לא מצאנו את הטבלה לפי ID, אנחנו בבעיה.
+            if (!mainResultsTable) {
+                // מנסים לאתר טבלה שנמצאת אחרי הדיב של הכותרת "ספרים" כגיבוי
+                const booksHeader = doc.querySelector('h2.sr-only:contains("ספרים")');
+                if (booksHeader && booksHeader.nextElementSibling && booksHeader.nextElementSibling.tagName === 'TABLE') {
+                    const potentialTable = booksHeader.nextElementSibling.nextElementSibling;
+                    if (potentialTable && potentialTable.tagName === 'TABLE') {
+                        mainResultsTable = potentialTable;
+                    }
+                }
+            }
+
+            // אם לא נמצא אזור תוצאות ראשי, נחזיר מערך ריק.
+            if (!mainResultsTable) {
+                console.warn('לא נמצא אלמנט הטבלה הראשי (stm5toptbl1). החזרת 0 תוצאות.');
+                return [];
+            }
+
+            // כעת, סורקים שורות <tr> רק בתוך הטבלה הזו.
+            const allTrs = mainResultsTable.querySelectorAll('tr');
+            const bookRows = [];
+
+            // סריקת שורות ה-TR וסינון רק שורות התוכן האמיתיות.
+            allTrs.forEach(tr => {
+                const tds = tr.querySelectorAll('td');
+
+                // כל שורת תוצאה אמיתית חייבת להכיל לפחות 5 עמודות (TDs)
+                // ודא שהשורה אינה שורת כותרת (שעשויה להכיל TH במקום TD)
+                if (tds.length >= 5 && tr.querySelector('th') === null) {
+                    bookRows.push(tr);
+                }
+            });
+
+            console.log(`Debug: מספר שורות נתונים סופיות שסוננו ונמצאו: ${bookRows.length}`);
+
+            // 2. יצירת כרטיסי הספרים
+            const bookCards = [];
+            if (bookRows.length > 0) {
+                bookRows.forEach(row => {
+                    const card = parseBookRow(row);
+                    if (card) {
+                        bookCards.push(card);
+                    }
+                });
+            }
+
+            return bookCards;
+        }
+
+/**
+ * מנתחת שורת תוצאה (<tr>) ומחזירה כרטיס ספר מעוצב.
+ * הפונקציה משתמשת בסלקטורים מבוססי מיקום (td:nth-child) כדי להתגבר על מבנה ה-HTML הלא עקבי.
+ * @param {HTMLElement} row - אלמנט ה-<tr> המכיל את נתוני הספר.
+ * @returns {HTMLElement} - אלמנט ה-<div> של כרטיס הספר.
+ */
+function parseBookRow(row) {
+
+    // הגדרת משתני ברירת מחדל
+    let title = 'ללא כותרת';
+    let author = 'ללא מחבר';
+    let location = '';
+    let availabilityClass = 'unknown';
+    let availabilityText = 'ℹ מידע על זמינות לא ידוע';
+    let cleanPath = '';
+    let finalImageUrl = '';
+
+            // ------------------------------------------------------------
+            // חילוץ נתונים (מבוסס מיקום)
+            // ------------------------------------------------------------
+
+            // 1. כותרת הספר (TD הרביעי)
+            try {
+                const titleTd = row.querySelector('td:nth-child(4)');
+                if (titleTd) {
+                    const titleLink = titleTd.querySelector('a');
+                    if (titleLink) {
+                        const titleSpan = titleLink.querySelector('span');
+
+                        if (titleSpan) {
+                            title = titleSpan.textContent.trim();
+                        } else {
+                            title = titleLink.textContent.trim();
+                        }
+                    } else {
+                        title = titleTd.textContent.trim();
+                    }
+                }
+            } catch (e) {
+                // אין צורך בלוגים שוברים בגרסה הסופית
+            }
+
+            // 2. שם המחבר (TD השלישי)
+            try {
+                const authorTd = row.querySelector('td:nth-child(3)');
+                if (authorTd) {
+                    const authorLink = authorTd.querySelector('a');
+
+                    if (authorLink) {
+                        const authorSpan = authorLink.querySelector('span');
+
+                        if (authorSpan) {
+                            author = authorSpan.textContent.trim();
+                        } else {
+                            author = authorLink.textContent.trim();
+                        }
+                    } else {
+                        author = authorTd.textContent.trim();
+                    }
+                }
+            } catch (e) {
+                // אין צורך בלוגים שוברים בגרסה הסופית
+            }
+
+            // 3. מיקום/סיווג (TD השני)
+            try {
+                const dataTd = row.querySelector('td:nth-child(2)');
+                if (dataTd) {
+                    // ניקוי רווחים מרובים ותווי שורה
+                    location = dataTd.textContent.replace(/\s+/g, ' ').trim();
+                }
+            } catch (e) {
+                // אין צורך בלוגים שוברים בגרסה הסופית
+            }
+
+            // 4. תמונה וזמינות 
+ const imgElement = row.querySelector('img[id="srcImg"]');
+    if (imgElement) {
+        // בדיקת זמינות לפי צבע הגבול:
+        const borderStyle = imgElement.getAttribute('style') || '';
+        if (borderStyle.includes('green')) {
+            availabilityClass = 'available';
+            availabilityText = '✓ זמין להשאלה';
+        } else if (borderStyle.includes('red')) {
+            availabilityClass = 'unavailable';
+            availabilityText = '✗ לא זמין כרגע';
+        }
+
+        // טיפול בנתיב התמונה:
+        const originalSrc = imgElement.getAttribute('src');
+        if (originalSrc) {
+            // הסרת המחיצה הראשונית (../)
+            let currentPath = originalSrc.replace(/^\.\./, '');
+            
+            // החלפת קוד הגודל S-V ל-N-V
+            currentPath = currentPath.replace('GD_S-V_', 'GD_N-V_'); 
+
+            // בניית הנתיב המלא
+            const fullImagePath = `/BuildaGate5library${currentPath}`;
+            finalImageUrl = `http://localhost:3000${fullImagePath}`; // ⬅️ רק השמה ללא הגדרה (let)
+        }
+    }
+
+            // ------------------------------------------------------------
+            // בניית כרטיס ה-UI
+            // ------------------------------------------------------------
+const bookCard = document.createElement('div');
+    bookCard.className = 'book-card';
+    const detailsDiv = document.createElement('div');
+    detailsDiv.className = 'book-details';
+
+    // 1. תמונה
+    const imageDiv = document.createElement('div');
+    imageDiv.className = 'book-image';
+    
+    // 🎯 שימוש ב-finalImageUrl לאחר ההגדרה
+    if (finalImageUrl) { 
+        const img = document.createElement('img');
+        img.src = finalImageUrl; 
+
+        img.onerror = () => {
+            imageDiv.classList.add('no-image');
+            imageDiv.textContent = '📚';
+            img.style.display = 'none';
+        };
+        imageDiv.appendChild(img);
+    } else {
+        imageDiv.classList.add('no-image');
+        imageDiv.textContent = '📚';
+    }
+    bookCard.appendChild(imageDiv);
+
+    // 2. כותרת
+    const titleDiv = document.createElement('div');
+    titleDiv.className = 'book-title';
+    titleDiv.textContent = title;
+    detailsDiv.appendChild(titleDiv);
+
+            // 3. מחבר
+            if (author.length > 0 && author !== 'ללא מחבר') {
+                const authorDiv = document.createElement('div');
+                authorDiv.className = 'book-info';
+                authorDiv.innerHTML = `<span class="info-label">מחבר:</span><span class="info-value">${author}</span>`;
+                detailsDiv.appendChild(authorDiv);
+            }
+
+            // 4. מיקום/סיווג
+            if (location.length > 0) {
+                const locDiv = document.createElement('div');
+                locDiv.className = 'book-info';
+                locDiv.innerHTML = `<span class="info-label">מיקום וסיווג:</span><span class="info-value">${location}</span>`;
+                detailsDiv.appendChild(locDiv);
+            }
+
+            // 5. זמינות
+            const availDiv = document.createElement('div');
+            availDiv.className = `availability ${availabilityClass}`;
+            availDiv.textContent = availabilityText;
+            detailsDiv.appendChild(availDiv);
+
+            bookCard.appendChild(detailsDiv);
+
+            return bookCard;
+        }
+
+
+        
+        function displayResults(cards) {
+            const resultsContainer = document.getElementById('results-container');
+            const resultsInfoDiv = document.getElementById('results-info');
+
+            resultsContainer.innerHTML = ''; // ניקוי תוצאות קודמות
+
+            if (cards.length === 0) {
+                showNoResults();
+                resultsInfoDiv.style.display = 'none';
+            } else {
+                cards.forEach(card => {
+                    resultsContainer.appendChild(card);
+                });
+
+                resultsInfoDiv.textContent = `נמצאו ${cards.length} תוצאות עבור: "${query}"`;
+                resultsInfoDiv.style.display = 'block';
+            }
+        }
+
+        function showNoResults() {
+            const resultsContainer = document.getElementById('results-container');
+            resultsContainer.innerHTML = `
+                <div class="no-results">
+                    <div class="no-results-icon">🔍</div>
+                    <h2>לא נמצאו תוצאות</h2>
+                    <p>נסה לשנות את מילות החיפוש או להשתמש במילים אחרות</p>
+                </div>
+            `;
+        }
+
+        function showError(message) {
+            const errorContainer = document.getElementById('error-container');
+            errorContainer.innerHTML = `
+                <div class="error">
+                    <strong>שגיאה:</strong> ${message}
+                </div>
+            `;
+        }
+
+        // הפעלת החיפוש בטעינת הדף
+        if (query) {
+            performSearch();
+        } else {
+            document.getElementById('loading').style.display = 'none';
+            showError('לא צוין ערך לחיפוש');
+        }
+    </script>
+</body>
+
+</html>

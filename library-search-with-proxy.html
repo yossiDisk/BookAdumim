@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>חיפוש ספרים - ספריית מעלה אדומים</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.4s ease;
+        }
+
+        body.compact-mode {
+            align-items: flex-start;
+            padding-top: 40px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            transition: all 0.4s ease;
+        }
+
+        body.compact-mode .container {
+            padding: 30px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2em;
+            transition: all 0.4s ease;
+        }
+
+        body.compact-mode h1 {
+            font-size: 1.5em;
+            margin-bottom: 5px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 40px;
+            font-size: 1.1em;
+            transition: all 0.4s ease;
+        }
+
+        body.compact-mode .subtitle {
+            font-size: 0.95em;
+            margin-bottom: 20px;
+        }
+
+        .search-type-toggle {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            background: #f5f5f5;
+            padding: 5px;
+            border-radius: 12px;
+        }
+
+        .toggle-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            background: transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            color: #666;
+            transition: all 0.3s ease;
+        }
+
+        .toggle-btn.active {
+            background: white;
+            color: #667eea;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .search-container {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 16px 20px;
+            font-size: 18px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        .search-input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .autocomplete-results {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            left: 0;
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-top: none;
+            border-radius: 0 0 12px 12px;
+            max-height: 400px;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            display: none;
+        }
+
+        .autocomplete-results.show {
+            display: block;
+        }
+
+        .autocomplete-item {
+            padding: 14px 20px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background-color 0.2s ease;
+            color: #333;
+        }
+
+        .autocomplete-item:last-child {
+            border-bottom: none;
+        }
+
+        .autocomplete-item:hover,
+        .autocomplete-item.selected {
+            background-color: #f8f9ff;
+            color: #667eea;
+        }
+
+        .load-more {
+            padding: 14px 20px;
+            text-align: center;
+            background: #f8f9ff;
+            color: #667eea;
+            font-weight: 500;
+            cursor: pointer;
+            border-top: 2px dashed #e0e0e0;
+        }
+
+        .load-more:hover {
+            background: #eef1ff;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+
+        .no-results {
+            padding: 20px;
+            text-align: center;
+            color: #999;
+        }
+
+        .error-message {
+            padding: 20px;
+            text-align: center;
+            color: #dc3545;
+            background: #ffe5e5;
+            border-radius: 8px;
+            margin: 10px;
+        }
+
+        .search-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .search-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .search-btn:active {
+            transform: translateY(0);
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 640px) {
+            .container {
+                padding: 30px 20px;
+            }
+
+            h1 {
+                font-size: 1.6em;
+            }
+
+            .subtitle {
+                font-size: 1em;
+            }
+
+            .search-input {
+                font-size: 16px;
+                padding: 14px 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 חיפוש ספרים</h1>
+        <p class="subtitle">ספריית מעלה אדומים</p>
+
+        <div class="search-type-toggle">
+            <button class="toggle-btn active" id="book-tab" data-search-type="item_name_from_search_screen">
+                שם ספר
+            </button>
+            <button class="toggle-btn" id="author-tab" data-search-type="author_name_from_search_screen">
+                שם מחבר
+            </button>
+        </div>
+
+        <div class="search-container">
+            <input 
+                type="text" 
+                id="search-input" 
+                class="search-input" 
+                placeholder="הקלד שם ספר..."
+                autocomplete="off"
+            >
+            <div id="autocomplete-results" class="autocomplete-results"></div>
+        </div>
+
+        <button class="search-btn" id="search-btn">חפש</button>
+    </div>
+
+    <script>
+        // This will use the proxy server running on localhost:3000
+        const API_BASE_URL = 'http://localhost:3000/BuildaGate5library/controllers/fast_search.php';
+        
+        let currentSearchType = 'item_name_from_search_screen';
+        let currentFrom = 0;
+        let selectedIndex = -1;
+        let selectedItemIds = null;
+        let debounceTimer;
+
+        const searchInput = document.getElementById('search-input');
+        const autocompleteResults = document.getElementById('autocomplete-results');
+        const searchBtn = document.getElementById('search-btn');
+        const bookTab = document.getElementById('book-tab');
+        const authorTab = document.getElementById('author-tab');
+
+        [bookTab, authorTab].forEach(tab => {
+            tab.addEventListener('click', () => {
+                bookTab.classList.toggle('active');
+                authorTab.classList.toggle('active');
+                currentSearchType = tab.dataset.searchType;
+                searchInput.placeholder = currentSearchType === 'item_name_from_search_screen' 
+                    ? 'הקלד שם ספר...' 
+                    : 'הקלד שם מחבר...';
+                searchInput.value = '';
+                selectedItemIds = null;
+                hideAutocomplete();
+            });
+        });
+
+        searchInput.addEventListener('input', (e) => {
+            const value = e.target.value.trim();
+            clearTimeout(debounceTimer);
+            
+            // Enable compact mode when user types
+            if (value.length > 0) {
+                document.body.classList.add('compact-mode');
+            } else {
+                document.body.classList.remove('compact-mode');
+            }
+            
+            if (value.length < 2) {
+                hideAutocomplete();
+                return;
+            }
+
+            debounceTimer = setTimeout(() => {
+                currentFrom = 0;
+                fetchAutocomplete(value);
+            }, 300);
+        });
+
+        searchInput.addEventListener('keydown', (e) => {
+            const items = document.querySelectorAll('.autocomplete-item:not(.load-more)');
+            
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
+                updateSelectedItem(items);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                selectedIndex = Math.max(selectedIndex - 1, -1);
+                updateSelectedItem(items);
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                if (selectedIndex >= 0 && items[selectedIndex]) {
+                    selectItem(items[selectedIndex]);
+                } else {
+                    performSearch();
+                }
+            } else if (e.key === 'Escape') {
+                hideAutocomplete();
+            }
+        });
+
+        function updateSelectedItem(items) {
+            items.forEach((item, index) => {
+                if (index === selectedIndex) {
+                    item.classList.add('selected');
+                    item.scrollIntoView({ block: 'nearest' });
+                } else {
+                    item.classList.remove('selected');
+                }
+            });
+        }
+
+        async function fetchAutocomplete(searchValue, isRetry = false) {
+            showLoading();
+
+            const params = new URLSearchParams({
+                fromAutoRes: '0',
+                search_type: currentSearchType,
+                Card: 'Card1',
+                num_results: '10',
+                searchValue: searchValue,
+                size: '170',
+                from: currentFrom.toString(),
+                searchName: 'FreeText_1'
+            });
+
+            try {
+                const response = await fetch(`${API_BASE_URL}?${params}`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const text = await response.text();
+                const hasResults = parseAndDisplayResults(text, currentFrom > 0);
+                
+                // If no results and searching by author and has space (multiple words)
+                if (!hasResults && currentSearchType === 'author_name_from_search_screen' && !isRetry && currentFrom === 0) {
+                    const words = searchValue.trim().split(/\s+/);
+                    // If there are at least 2 words, try searching just the last word (last name)
+                    if (words.length >= 2) {
+                        const lastName = words[words.length - 1];
+                        console.log(`🔄 No results for "${searchValue}", trying last name only: "${lastName}"`);
+                        await fetchAutocomplete(lastName, true);
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching autocomplete:', error);
+                showError('שגיאה בחיבור לשרת. ודא שה-proxy server רץ על localhost:3000');
+            }
+        }
+
+        function parseAndDisplayResults(html, append = false) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const rows = doc.querySelectorAll('tr');
+
+            if (!append) {
+                autocompleteResults.innerHTML = '';
+            }
+
+            let hasResults = false;
+
+            rows.forEach((row) => {
+                const td = row.querySelector('td');
+                if (!td) return;
+
+                const id = td.getAttribute('id');
+                
+                if (id === 'moreResults') {
+                    addLoadMoreButton();
+                    return;
+                }
+
+                hasResults = true;
+
+                const text = td.textContent.trim();
+                const onmousedown = td.getAttribute('onmousedown');
+                const itemIds = extractItemIds(onmousedown);
+
+                const item = document.createElement('div');
+                item.className = 'autocomplete-item';
+                item.textContent = text;
+                item.dataset.itemIds = itemIds;
+
+                item.addEventListener('click', () => selectItem(item));
+
+                autocompleteResults.appendChild(item);
+            });
+
+            if (hasResults) {
+                showAutocomplete();
+            } else if (!append) {
+                showNoResults();
+            }
+
+            selectedIndex = -1;
+            
+            return hasResults;
+        }
+
+        function extractItemIds(onmousedownAttr) {
+            if (!onmousedownAttr) return '';
+            const match = onmousedownAttr.match(/chosenItem\.value='([^']+)'/);
+            return match ? match[1] : '';
+        }
+
+        function addLoadMoreButton() {
+            const loadMore = document.createElement('div');
+            loadMore.className = 'load-more';
+            loadMore.innerHTML = '↓ הצג תוצאות נוספות ↓';
+            
+            loadMore.addEventListener('click', () => {
+                currentFrom += 10;
+                fetchAutocomplete(searchInput.value.trim());
+            });
+
+            autocompleteResults.appendChild(loadMore);
+        }
+
+function selectItem(item) {
+    const itemName = item.textContent;
+    const itemIds = item.dataset.itemIds;
+    const searchType = currentSearchType === 'author_name_from_search_screen' ? 'author' : 'item';
+    
+    // Navigate to search results page
+    window.location.href = `search-results.html?q=${encodeURIComponent(itemName)}&type=${searchType}&ids=${itemIds}`;
+}
+
+        function showLoading() {
+            autocompleteResults.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+            showAutocomplete();
+        }
+
+        function showNoResults() {
+            autocompleteResults.innerHTML = '<div class="no-results">לא נמצאו תוצאות</div>';
+            showAutocomplete();
+        }
+
+        function showError(message) {
+            autocompleteResults.innerHTML = `<div class="error-message">${message}</div>`;
+            showAutocomplete();
+        }
+
+        function showAutocomplete() {
+            autocompleteResults.classList.add('show');
+        }
+
+        function hideAutocomplete() {
+            autocompleteResults.classList.remove('show');
+            selectedIndex = -1;
+            
+            // Remove compact mode if input is empty
+            if (!searchInput.value.trim()) {
+                document.body.classList.remove('compact-mode');
+            }
+        }
+
+        document.addEventListener('click', (e) => {
+            if (!searchInput.contains(e.target) && !autocompleteResults.contains(e.target)) {
+                hideAutocomplete();
+            }
+        });
+
+        searchBtn.addEventListener('click', performSearch);
+
+function performSearch() {
+    const searchValue = searchInput.value.trim();
+    
+    if (!searchValue) {
+        alert('אנא הזן ערך לחיפוש');
+        return;
+    }
+    
+    const searchType = currentSearchType === 'author_name_from_search_screen' ? 'author' : 'item';
+    
+    // Navigate to search results page
+    window.location.href = `search-results.html?q=${encodeURIComponent(searchValue)}&type=${searchType}${selectedItemIds ? '&ids=' + selectedItemIds : ''}`;
+}
+    </script>
+</body>
+</html>
