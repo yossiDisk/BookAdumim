@@ -6,6 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>תוצאות חיפוש - ספריית מעלה אדומים</title>
     <style>
+        /* ------------------------------------------- */
+        /* CSS בסיסי (רגיל - שולחני)          */
+        /* ------------------------------------------- */
         * {
             margin: 0;
             padding: 0;
@@ -40,6 +43,7 @@
         h1 {
             color: #333;
             font-size: 1.8em;
+            /* שינוי: הגדרה עבור מובייל תשנה את זה */
         }
 
         .back-btn {
@@ -103,6 +107,7 @@
             margin-bottom: 20px;
             transition: all 0.3s ease;
             display: flex;
+            /* ברירת מחדל: פריסה אופקית */
             gap: 20px;
         }
 
@@ -115,6 +120,7 @@
         .book-image {
             flex-shrink: 0;
             width: 120px;
+            /* גודל תמונה רגיל */
             height: 180px;
             overflow: hidden;
             border-radius: 8px;
@@ -163,17 +169,6 @@
             color: #333;
         }
 
-        .book-classification {
-            background: #f0f4ff;
-            padding: 8px 12px;
-            border-radius: 6px;
-            display: inline-block;
-            font-size: 14px;
-            color: #667eea;
-            font-weight: 500;
-            margin-bottom: 10px;
-        }
-
         .availability {
             padding: 8px 16px;
             border-radius: 6px;
@@ -210,6 +205,108 @@
             padding: 20px;
             border-radius: 8px;
             margin-bottom: 20px;
+        }
+
+
+        /* ------------------------------------------- */
+        /* MEDIA QUERY - מובייל             */
+        /* ------------------------------------------- */
+        /* מתאים למסכים קטנים מ-600 פיקסלים (טלפונים) */
+        @media (max-width: 600px) {
+
+            /* 1. התאמות לגוף הדף והקונטיינר */
+            body {
+                padding: 10px;
+                /* הפחתת ריפוד כללי */
+            }
+
+            .container {
+                padding: 15px;
+                /* הפחתת ריפוד בקונטיינר */
+                border-radius: 10px;
+            }
+
+            /* 2. התאמות לכותרת ולכפתור חזרה */
+            .header {
+                flex-direction: column;
+                /* מעבר לפריסה אנכית בכותרת */
+                align-items: flex-start;
+                margin-bottom: 20px;
+                padding-bottom: 10px;
+            }
+
+            h1 {
+                font-size: 1.4em;
+                /* הקטנת כותרת */
+                margin-bottom: 10px;
+            }
+
+            .back-btn {
+                width: 100%;
+                /* כפתור לרוחב מלא */
+                text-align: center;
+                padding: 10px 15px;
+            }
+
+            .results-info {
+                padding: 10px;
+                font-size: 14px;
+            }
+
+            /* 3. התאמות לכרטיס הספר (הכי חשוב) */
+            .book-card {
+                flex-direction: column;
+                /* מעבר מפריסה אופקית לאנכית */
+                align-items: center;
+                /* מרכוז תוכן אנכי */
+                padding: 15px;
+            }
+
+            .book-image {
+                width: 100px;
+                /* הקטנת רוחב התמונה */
+                height: 150px;
+                /* הקטנת גובה התמונה */
+                margin-bottom: 15px;
+            }
+
+            .book-details {
+                text-align: center;
+                /* מרכוז הטקסט בפרטי הספר */
+                width: 100%;
+            }
+
+            .book-title {
+                font-size: 1.2em;
+                /* הקטנת כותרת הספר */
+                margin-bottom: 5px;
+            }
+
+            /* מעבר לפריסה רגילה (בלוק) לפרטי הספר */
+            .book-info {
+                display: block;
+                margin-bottom: 10px;
+            }
+
+            .info-label {
+                display: block;
+                /* כל לייבל בשורה משלו */
+                font-weight: bold;
+                color: #333;
+                margin-bottom: 2px;
+                font-size: 0.9em;
+            }
+
+            .info-value {
+                display: block;
+                /* כל ערך בשורה משלו */
+                font-size: 1em;
+            }
+
+            .availability {
+                padding: 6px 12px;
+                font-size: 0.9em;
+            }
         }
     </style>
 </head>
@@ -371,22 +468,22 @@
             return bookCards;
         }
 
-/**
- * מנתחת שורת תוצאה (<tr>) ומחזירה כרטיס ספר מעוצב.
- * הפונקציה משתמשת בסלקטורים מבוססי מיקום (td:nth-child) כדי להתגבר על מבנה ה-HTML הלא עקבי.
- * @param {HTMLElement} row - אלמנט ה-<tr> המכיל את נתוני הספר.
- * @returns {HTMLElement} - אלמנט ה-<div> של כרטיס הספר.
- */
-function parseBookRow(row) {
+        /**
+         * מנתחת שורת תוצאה (<tr>) ומחזירה כרטיס ספר מעוצב.
+         * הפונקציה משתמשת בסלקטורים מבוססי מיקום (td:nth-child) כדי להתגבר על מבנה ה-HTML הלא עקבי.
+         * @param {HTMLElement} row - אלמנט ה-<tr> המכיל את נתוני הספר.
+         * @returns {HTMLElement} - אלמנט ה-<div> של כרטיס הספר.
+         */
+        function parseBookRow(row) {
 
-    // הגדרת משתני ברירת מחדל
-    let title = 'ללא כותרת';
-    let author = 'ללא מחבר';
-    let location = '';
-    let availabilityClass = 'unknown';
-    let availabilityText = 'ℹ מידע על זמינות לא ידוע';
-    let cleanPath = '';
-    let finalImageUrl = '';
+            // הגדרת משתני ברירת מחדל
+            let title = 'ללא כותרת';
+            let author = 'ללא מחבר';
+            let location = '';
+            let availabilityClass = 'unknown';
+            let availabilityText = 'ℹ מידע על זמינות לא ידוע';
+            let cleanPath = '';
+            let finalImageUrl = '';
 
             // ------------------------------------------------------------
             // חילוץ נתונים (מבוסס מיקום)
@@ -446,68 +543,68 @@ function parseBookRow(row) {
                 // אין צורך בלוגים שוברים בגרסה הסופית
             }
 
-            // 4. תמונה וזמינות 
- const imgElement = row.querySelector('img[id="srcImg"]');
-    if (imgElement) {
-        // בדיקת זמינות לפי צבע הגבול:
-        const borderStyle = imgElement.getAttribute('style') || '';
-        if (borderStyle.includes('green')) {
-            availabilityClass = 'available';
-            availabilityText = '✓ זמין להשאלה';
-        } else if (borderStyle.includes('red')) {
-            availabilityClass = 'unavailable';
-            availabilityText = '✗ לא זמין כרגע';
-        }
+            // 4. תמונה וזמינות
+            const imgElement = row.querySelector('img[id="srcImg"]');
+            if (imgElement) {
+                // בדיקת זמינות לפי צבע הגבול:
+                const borderStyle = imgElement.getAttribute('style') || '';
+                if (borderStyle.includes('green')) {
+                    availabilityClass = 'available';
+                    availabilityText = '✓ זמין להשאלה';
+                } else if (borderStyle.includes('red')) {
+                    availabilityClass = 'unavailable';
+                    availabilityText = '✗ לא זמין כרגע';
+                }
 
-        // טיפול בנתיב התמונה:
-        const originalSrc = imgElement.getAttribute('src');
-        if (originalSrc) {
-            // הסרת המחיצה הראשונית (../)
-            let currentPath = originalSrc.replace(/^\.\./, '');
-            
-            // החלפת קוד הגודל S-V ל-N-V
-            currentPath = currentPath.replace('GD_S-V_', 'GD_N-V_'); 
+                // טיפול בנתיב התמונה:
+                const originalSrc = imgElement.getAttribute('src');
+                if (originalSrc) {
+                    // הסרת המחיצה הראשונית (../)
+                    let currentPath = originalSrc.replace(/^\.\./, '');
 
-            // בניית הנתיב המלא
-            const fullImagePath = `/BuildaGate5library${currentPath}`;
-            finalImageUrl = `https://bookadumim.onrender.com${fullImagePath}`; // ⬅️ רק השמה ללא הגדרה (let)
-        }
-    }
+                    // החלפת קוד הגודל S-V ל-N-V
+                    currentPath = currentPath.replace('GD_S-V_', 'GD_N-V_');
+
+                    // בניית הנתיב המלא
+                    const fullImagePath = `/BuildaGate5library${currentPath}`;
+                    finalImageUrl = `https://bookadumim.onrender.com${fullImagePath}`; // ⬅️ רק השמה ללא הגדרה (let)
+                }
+            }
 
             // ------------------------------------------------------------
             // בניית כרטיס ה-UI
             // ------------------------------------------------------------
-const bookCard = document.createElement('div');
-    bookCard.className = 'book-card';
-    const detailsDiv = document.createElement('div');
-    detailsDiv.className = 'book-details';
+            const bookCard = document.createElement('div');
+            bookCard.className = 'book-card';
+            const detailsDiv = document.createElement('div');
+            detailsDiv.className = 'book-details';
 
-    // 1. תמונה
-    const imageDiv = document.createElement('div');
-    imageDiv.className = 'book-image';
-    
-    // 🎯 שימוש ב-finalImageUrl לאחר ההגדרה
-    if (finalImageUrl) { 
-        const img = document.createElement('img');
-        img.src = finalImageUrl; 
+            // 1. תמונה
+            const imageDiv = document.createElement('div');
+            imageDiv.className = 'book-image';
 
-        img.onerror = () => {
-            imageDiv.classList.add('no-image');
-            imageDiv.textContent = '📚';
-            img.style.display = 'none';
-        };
-        imageDiv.appendChild(img);
-    } else {
-        imageDiv.classList.add('no-image');
-        imageDiv.textContent = '📚';
-    }
-    bookCard.appendChild(imageDiv);
+            // 🎯 שימוש ב-finalImageUrl לאחר ההגדרה
+            if (finalImageUrl) {
+                const img = document.createElement('img');
+                img.src = finalImageUrl;
 
-    // 2. כותרת
-    const titleDiv = document.createElement('div');
-    titleDiv.className = 'book-title';
-    titleDiv.textContent = title;
-    detailsDiv.appendChild(titleDiv);
+                img.onerror = () => {
+                    imageDiv.classList.add('no-image');
+                    imageDiv.textContent = '📚';
+                    img.style.display = 'none';
+                };
+                imageDiv.appendChild(img);
+            } else {
+                imageDiv.classList.add('no-image');
+                imageDiv.textContent = '📚';
+            }
+            bookCard.appendChild(imageDiv);
+
+            // 2. כותרת
+            const titleDiv = document.createElement('div');
+            titleDiv.className = 'book-title';
+            titleDiv.textContent = title;
+            detailsDiv.appendChild(titleDiv);
 
             // 3. מחבר
             if (author.length > 0 && author !== 'ללא מחבר') {
@@ -537,7 +634,7 @@ const bookCard = document.createElement('div');
         }
 
 
-        
+
         function displayResults(cards) {
             const resultsContainer = document.getElementById('results-container');
             const resultsInfoDiv = document.getElementById('results-info');
