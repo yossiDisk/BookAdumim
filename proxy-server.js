@@ -242,12 +242,15 @@ setInterval(() => {
     }
 }, 5 * 60 * 1000);
 
-app.listen(PORT, () => {
+const HOST = '0.0.0.0';
+const SERVER_PORT = process.env.PORT || 3000; // ישתמש ב-PORT של הסביבה, או 3000 אם מקומי
+
+app.listen(SERVER_PORT, HOST, () => {
     console.log(`
 ╔════════════════════════════════════════════════╗
 ║   🚀 Proxy Server with Session Init           ║
 ╟────────────────────────────────────────────────╢
-║   📍 Local:  http://localhost:${PORT}            ║
+║   📍 Running on:  http://${HOST}:${SERVER_PORT}    ║
 ║   🔗 Target: maale-adummim.libraries.co.il    ║
 ║   🍪 Cookie: Auto-initialized per client      ║
 ║   ⏱️  Session: 30 min expiry                   ║
