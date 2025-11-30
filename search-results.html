@@ -275,7 +275,7 @@
                     'adv_open': 'none'
                 });
 
-                const response = await fetch('http://localhost:3000/BuildaGate5library/general2/company_search_tree.php', {
+                const response = await fetch('https://bookadumim.onrender.com/BuildaGate5library/general2/company_search_tree.php', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded',
@@ -456,7 +456,7 @@ function parseBookRow(row) {
             availabilityText = '✓ זמין להשאלה';
         } else if (borderStyle.includes('red')) {
             availabilityClass = 'unavailable';
-            availabilityText = '✗ לא זמין להשאלה';
+            availabilityText = '✗ לא זמין כרגע';
         }
 
         // טיפול בנתיב התמונה:
@@ -470,7 +470,7 @@ function parseBookRow(row) {
 
             // בניית הנתיב המלא
             const fullImagePath = `/BuildaGate5library${currentPath}`;
-            finalImageUrl = `http://localhost:3000${fullImagePath}`; // ⬅️ רק השמה ללא הגדרה (let)
+            finalImageUrl = `https://bookadumim.onrender.com${fullImagePath}`; // ⬅️ רק השמה ללא הגדרה (let)
         }
     }
 
